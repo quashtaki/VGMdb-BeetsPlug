@@ -36,27 +36,27 @@ class VGMdbPlugin(BeetsPlugin):
         if va_likely:
             query = album
         else:
-            query = '%s %s' % (artist, album)
+            query = '{} {}'.format(artist, album)
         try:
             return self.get_albums(query, va_likely)
         except:
-            log.debug('VGMdb Search Error: (query: %s)' % query)
+            log.debug('VGMdb Search Error: (query: {})'.format(query))
             return []
 
     def album_for_id(self, album_id):
         """Fetches an album by its VGMdb ID and returns an AlbumInfo object
         or None if the album is not found.
         """
-        log.debug('Querying VGMdb for release %s' % str(album_id))
+        log.debug('Querying VGMdb for release {}'.format(album_id)
 
         # Get from VGMdb
-        r = requests.get('http://vgmdb.info/album/%s?format=json' % str(album_id))
+        r = requests.get('https://vgmdb.info/album/{}?format=json'.format(album_id))
 
         # Decode Response's content
         try:
             item = r.json()
-        except:
-            log.debug('VGMdb JSON Decode Error: (id: %s)' % album_id)
+        except ValueError:
+            log.debug('VGMdb JSON Decode Error: (id: {})'.format(album_id))
             return None
 
         return self.get_album_info(item, False)
@@ -71,33 +71,27 @@ class VGMdbPlugin(BeetsPlugin):
         query = re.sub(r'(?u)\W+', ' ', query)
         # Strip medium information from query, Things like "CD1" and "disk 1"
         # can also negate an otherwise positive result.
-        query = re.sub(r'(?i)\b(CD|disc)\s*\d+', '', query)
+        query = re.sub(r'(?i)\b(CD|disc|disk)\s*\d+', '', query)
 
         # Query VGMdb
-        r = requests.get('http://vgmdb.info/search/albums/%s?format=json' % query)
+        r = requests.get('http://vgmdb.info/search/albums/{}?format=json'.format(query))
         albums = []
 
         # Decode Response's content
         try:
             items = r.json()
         except:
-            log.debug('VGMdb JSON Decode Error: (query: %s)' % query)
+            log.debug('VGMdb JSON Decode Error: (query: {})'.format(query))
             return albums
 
         # Break up and get search results
         for item in items["results"]["albums"]:
-            album_id = str(self.decod(item["link"][6:]))
+            album_id = str(item["link"][6:])
             albums.append(self.album_for_id(album_id))
             if len(albums) >= 5:
                 break
-        log.debug('get_albums Querying VGMdb for release %s' % str(query))
+        log.debug('get_albums Querying VGMdb for release {}'.format(query))
         return albums
-
-    def decod(self, val, codec='utf8'):
-        """Ensure that all string are coded to Unicode.
-        """
-        if isinstance(val, basestring):
-            return val.decode(codec, 'ignore')
 
     def get_album_info(self, item, va_likely):
         """Convert json data into a format beets can read
@@ -185,9 +179,9 @@ class VGMdbPlugin(BeetsPlugin):
         data_url = item["vgmdb_link"]
 
         return AlbumInfo(album_name,
-                        self.decod(album_id),
+                        str(album_id),
                         artist,
-                        self.decod(artist_id),
+                        str(artist_id),
                         Tracks,
                         asin=None,
                         albumtype=None,
@@ -197,9 +191,9 @@ class VGMdbPlugin(BeetsPlugin):
                         day=int(day),
                         label=label,
                         mediums=int(mediums),
-                        media=self.decod(media),
-                        data_source=self.decod('VGMdb'),
-                        data_url=self.decod(data_url),
-                        country=self.decod(country),
-                        catalognum=self.decod(catalognum)
+                        media=str(media),
+                        data_source='VGMdb',
+                        data_url=str(data_url),
+                        country=str(country),
+                        catalognum=str(catalognum)
                      )
