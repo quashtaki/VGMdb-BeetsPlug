@@ -1,4 +1,3 @@
-# VGMdb-BeetsPlug
-Beets plugin that allows it to query VGMdb
+# VGMdb Beets plugin
 
-*Not compatible with Python 3.0+*
+Beets plugin that allows it to query VGMdb, useful for anime/games songs.

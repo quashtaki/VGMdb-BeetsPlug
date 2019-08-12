@@ -100,7 +100,7 @@ class VGMdbPlugin(BeetsPlugin):
         # If a preferred lang is available use that instead
         album_name = item["name"]
         for lang in self.lang:
-            if item["names"].has_key(lang):
+            if lang in item["names"]:
                 album_name = item["names"][lang]
 
         album_id = item["link"][6:]
@@ -108,20 +108,20 @@ class VGMdbPlugin(BeetsPlugin):
         catalognum = item["catalog"]
 
         # Get Artist information
-        if item.has_key("performers") and len(item["performers"]) > 0:
+        if 'performers' in item and len(item["performers"]) > 0:
             artist_type = "performers"
         else:
             artist_type = "composers"
 
         artists = []
         for artist in item[artist_type]:
-            if artist["names"].has_key(self.lang[0]):
+            if self.lang[0] in artist["names"]:
                 artists.append(artist["names"][self.lang[0]])
             else:
                 artists.append(artist["names"]["ja"])
 
         artist = artists[0]
-        if item[artist_type][0].has_key("link"):
+        if 'link' in item[artist_type][0]:
             artist_id = item[artist_type][0]["link"][7:]
         else:
             artist_id = None
@@ -133,9 +133,9 @@ class VGMdbPlugin(BeetsPlugin):
             for track_index, track in enumerate(disc["tracks"]):
                 total_index += 1
 
-                if track["names"].has_key("English"):
+                if "English" in track["names"]:
                     title = track["names"]["English"]
-                elif track["names"].has_key("Romaji"):
+                elif "Romaji" in track["names"]:
                     title = track["names"]["Romaji"]
                 else:
                     title = track["names"].values()[0]
@@ -168,7 +168,7 @@ class VGMdbPlugin(BeetsPlugin):
         month = release_date[1]
         day   = release_date[2]
 
-        if item["publisher"]["names"].has_key(self.lang[0]):
+        if self.lang[0] in item["publisher"]["names"]:
             label = item["publisher"]["names"][self.lang[0]]
         else:
             label = item["publisher"]["names"]["ja"]
