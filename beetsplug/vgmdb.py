@@ -47,7 +47,7 @@ class VGMdbPlugin(BeetsPlugin):
         """Fetches an album by its VGMdb ID and returns an AlbumInfo object
         or None if the album is not found.
         """
-        log.debug('Querying VGMdb for release {}'.format(album_id)
+        log.debug('Querying VGMdb for release {}'.format(album_id))
 
         # Get from VGMdb
         r = requests.get('https://vgmdb.info/album/{}?format=json'.format(album_id))
