@@ -1,7 +1,7 @@
 """Adds VGMdb search support to Beets
 """
-from beets.autotag.hooks import AlbumInfo, TrackInfo, Distance
-from beets.plugins import BeetsPlugin
+from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.plugins import BeetsPlugin, get_distance
 import logging
 import requests
 import re
@@ -23,13 +23,24 @@ class VGMdbPlugin(BeetsPlugin):
         self.lang = self.config["lang-priority"].get().split(",")
 
     def album_distance(self, items, album_info, mapping):
-        """Returns the album distance."""
-        dist = Distance()
-        if album_info.data_source == "VGMdb":
-            dist.add("source", self.source_weight)
-        return dist
+        """Returns the album distance.
+        """
+        return get_distance(
+            data_source='vgmdb',
+            info=album_info,
+            config=self.config
+        )
 
-    def candidates(self, items, artist, album, va_likely):
+    def track_distance(self, item, track_info):
+        """Returns the track distance.
+        """
+        return get_distance(
+            data_source='vgmdb',
+            info=track_info,
+            config=self.config
+        )
+
+    def candidates(self, items, artist, album, va_likely, extra_tags=None):
         """Returns a list of AlbumInfo objects for VGMdb search results
         matching an album and artist (if not various).
         """
@@ -107,10 +118,10 @@ class VGMdbPlugin(BeetsPlugin):
         catalognum = item["catalog"]
 
         # Get Artist information
-        if "performers" in item and len(item["performers"]) > 0:
-            artist_type = "performers"
-        else:
-            artist_type = "composers"
+        #if "performers" in item and len(item["performers"]) > 0:
+        #    artist_type = "performers"
+        #else:
+        artist_type = "composers" # i prefer composers, uncomment the above if you want that functionality
 
         artists = []
         for artist in item[artist_type]:
@@ -125,6 +136,7 @@ class VGMdbPlugin(BeetsPlugin):
         else:
             artist_id = None
 
+
         # Get Track metadata
         Tracks = []
         total_index = 0
@@ -132,6 +144,7 @@ class VGMdbPlugin(BeetsPlugin):
             for track_index, track in enumerate(disc["tracks"]):
                 total_index += 1
 
+                
                 title = list(track["names"].values())[0]
 
                 for lang in self.lang:
@@ -151,8 +164,8 @@ class VGMdbPlugin(BeetsPlugin):
                 medium = disc_index
                 medium_index = track_index
                 new_track = TrackInfo(
-                    title,
-                    int(index),
+                    title=title,
+                    track_id=int(index),
                     length=float(length),
                     index=int(index),
                     medium=int(medium),
@@ -162,10 +175,15 @@ class VGMdbPlugin(BeetsPlugin):
                 Tracks.append(new_track)
 
         # Format Album release date
-        release_date = item["release_date"].split("-")
-        year = release_date[0]
-        month = release_date[1]
-        day = release_date[2]
+        if item["release_date"]:
+            release_date = item["release_date"].split("-")
+            year = release_date[0]
+            month = release_date[1]
+            day = release_date[2]
+        else:
+            year = "0000"
+            month = "00"
+            day = "00"
 
         for lang in self.lang:
             if lang in item["publisher"]["names"]:
@@ -177,11 +195,11 @@ class VGMdbPlugin(BeetsPlugin):
                 data_url = item["vgmdb_link"]
 
                 return AlbumInfo(
-                    album_name,
-                    str(album_id),
-                    artist,
-                    str(artist_id),
-                    Tracks,
+                    album=album_name,
+                    album_id=str(album_id),
+                    artist=artist,
+                    artist_id=str(artist_id),
+                    tracks=Tracks,
                     asin=None,
                     albumtype=None,
                     va=False,
